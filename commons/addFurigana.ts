@@ -71,6 +71,9 @@ const createRuby = (token: KanjiMark, furiganaType: FuriganaType): HTMLElement =
 
   switch (furiganaType) {
     case FuriganaType.Hiragana:
+      if (token.en) {
+        break;
+      }
       token.reading = toHiragana(token.reading);
       break;
     case FuriganaType.Romaji:

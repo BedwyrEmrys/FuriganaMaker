@@ -54,7 +54,8 @@ export const registerOnGetKanjiMarksMessage = () => {
     const filterMap = new Map<string, string[]>(
       filterList.map((filterRule) => [filterRule.kanji, filterRule.reading]),
     );
-    const tokens = toKanjiToken(mojiTokens).map((token) => {
+    const tokensf = await toKanjiToken(mojiTokens);
+    const tokens = tokensf.map((token) => {
       return {
         ...token,
         isFiltered:

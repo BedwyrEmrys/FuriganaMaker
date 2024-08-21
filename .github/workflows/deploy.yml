@@ -1,12 +1,12 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  push:
-    paths:
-      - 'website/**'
-  pull_request:
-    paths:
-      - 'website/**'
+  # push:
+  #   paths:
+  #     - 'website/**'
+  # pull_request:
+  #   paths:
+  #     - 'website/**'
   workflow_dispatch:
 
 jobs:

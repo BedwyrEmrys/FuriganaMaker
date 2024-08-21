@@ -1,4 +1,5 @@
-import { isKanji, toKatakana } from "wanakana";
+import { kana2en } from "@/commons/kana2en";
+import { isKanji, isKatakana, toKatakana } from "wanakana";
 
 export interface MojiToken {
   word_position: number; // Indexes start from 1
@@ -12,6 +13,7 @@ export interface KanjiToken {
   reading: string;
   start: number; // Indexes start from 0
   end: number;
+  en: boolean;
 }
 /**
  * Extract useful kanji phonetic information from KuromojiToken[].
@@ -25,13 +27,34 @@ export interface KanjiToken {
  * ]
  * ```
  */
-export const toKanjiToken = (tokens: MojiToken[]): KanjiToken[] => {
-  return tokens.filter(isPhonetic).map(toSimplifiedToken).flatMap(toRubyText);
+export const toKanjiToken = async (tokens: MojiToken[]): Promise<KanjiToken[]> => {
+  const texts = tokens.filter(isPhonetic).map(toSimplifiedToken);
+  // console.log(`logmm tt texts: ${JSON.stringify(texts)}`);
+  const result: KanjiToken[] = [];
+
+  for (const text of texts) {
+    const rubyText = await toRubyText(text);
+    if (Array.isArray(rubyText)) {
+      result.push(...rubyText);
+    } else {
+      result.push(rubyText);
+    }
+  }
+  // console.log(`logmm tt texts result: ${JSON.stringify(result)}`);
+  return result;
 };
 
 const isPhonetic = (token: MojiToken): boolean => {
   const hasKanji = /\p{sc=Han}/v.test(token.surface_form);
-  return Boolean(token.reading && token.reading !== "*" && hasKanji);
+  if (token.reading && token.reading !== "*" && hasKanji) {
+    return true;
+  }
+  if (token.reading && token.reading !== "*" && isKatakana(token.surface_form)) {
+    return true;
+  }
+  return false;
+
+  // return Boolean(token.reading && token.reading !== "*" && hasKanji );
 };
 
 interface SimplifiedToken {
@@ -39,6 +62,7 @@ interface SimplifiedToken {
   reading: string; // Convert Katakana to Hiragana
   start: number; // Indexes start from 0
   end: number;
+  en: boolean;
 }
 
 const toSimplifiedToken = (kuromojiToken: MojiToken): SimplifiedToken => {
@@ -47,10 +71,16 @@ const toSimplifiedToken = (kuromojiToken: MojiToken): SimplifiedToken => {
     reading: kuromojiToken.reading!,
     start: kuromojiToken.word_position - 1,
     end: kuromojiToken.word_position - 1 + kuromojiToken.surface_form.length,
+    en: false,
   };
 };
 
-const toRubyText = (token: SimplifiedToken): KanjiToken | KanjiToken[] => {
+/**
+ * Disassemble SimplifiedToken into KanjiToken or KanjiToken[]
+ * @param token A token with reading and original
+ * @returns A KanjiToken or KanjiToken[] with reading and original
+ */
+const toRubyText = async (token: SimplifiedToken): Promise<KanjiToken | KanjiToken[]> => {
   // The pure Kanji words do not need to be disassembled.
   if (isKanji(token.original)) {
     return {
@@ -58,8 +88,25 @@ const toRubyText = (token: SimplifiedToken): KanjiToken | KanjiToken[] => {
       reading: token.reading,
       start: token.start,
       end: token.end,
+      en: false,
     };
   }
+  // If the token is written in Katakana, convert it to Hiragana.
+  // The reading of the token is the same as the original text.
+  if (isKatakana(token.original)) {
+    // token.reading = 'word';
+    // Convert Katakana to Hiragana
+    const en = await kana2en(token.original);
+    token.reading = en;
+    return {
+      original: token.original,
+      reading: token.reading,
+      start: token.start,
+      end: token.end,
+      en: true,
+    };
+  }
+  // If the token is not a pure Kanji word, disassemble it.
   return smashToken(token);
 };
 
@@ -105,7 +152,7 @@ const smashToken = (token: SimplifiedToken): KanjiToken[] => {
   // If the number of matching groups is not equal to the number of Kanji,
   // it means that the phonetic notation does not correspond to the text.
   if (!hybridMatch || hybridMatch.length !== kanjis.length) {
-    return [{ original, reading, start, end }];
+    return [{ original, reading, start, end, en: false }];
   }
 
   kanjis.forEach((kanji, index) => {

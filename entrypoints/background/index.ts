@@ -2,14 +2,15 @@ import { registerOnCommand } from "./listeners/onCommand";
 import { registerOnCtxMenuClick } from "./listeners/onCtxMenuClick";
 import { registerOnGetKanjiMarksMessage } from "./listeners/onGetKanjiMarksMessage";
 import { registerOnGetSelector } from "./listeners/onGetSelectorMessage";
-import { registerOnInstalled } from "./listeners/onInstalled";
+// import { registerOnInstalled } from "./listeners/onInstalled";
 import { registerOnMarkActiveMessage } from "./listeners/onMarkActiveMessage";
+import { registerOnLog } from "./listeners/onlog";
 
 export default defineBackground({
   type: "module",
   // Service worker must synchronous, not support async function.
   main() {
-    registerOnInstalled();
+    // registerOnInstalled();
     registerOnCommand();
     registerOnCtxMenuClick();
 
@@ -17,5 +18,7 @@ export default defineBackground({
     registerOnGetKanjiMarksMessage();
     registerOnGetSelector();
     registerOnMarkActiveMessage();
+
+    registerOnLog();
   },
 });
