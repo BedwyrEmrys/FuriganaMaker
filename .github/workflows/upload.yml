@@ -6,7 +6,7 @@ on:
 
 jobs:
   upload-artifact:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,8 +20,17 @@ jobs:
       - name: Build the extension
         run: pnpm run zip
 
+      - name: Build project for Safari
+        run: pnpm wxt build -b safari
+
+      - name: Convert to Safari Web Extension
+        run: xcrun safari-web-extension-converter .output/safari-mv2
+
+      - name: show .output files
+        run: ls -la .output
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-artifact
-          path: .output/*.zip
+          name: furigana-maker-exts
+          path: .output/
