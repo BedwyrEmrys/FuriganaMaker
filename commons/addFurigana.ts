@@ -85,6 +85,17 @@ const createRuby = (token: KanjiMark, furiganaType: FuriganaType): HTMLElement =
   }
   const readingTextNode = document.createTextNode(token.reading);
   const rt = document.createElement("rt");
+
+  leftParenthesisRp.style.userSelect = "none";
+  // leftParenthesisRp.style.fontWeight = "bold";
+
+  rightParenthesisRp.style.userSelect = "none";
+  // rightParenthesisRp.style.fontWeight = "bold";
+
+  rt.style.userSelect = "none";
+  // rt.style.fontWeight = "bold";
+
+
   rt.appendChild(readingTextNode);
   ruby.appendChild(originalText);
   ruby.appendChild(leftParenthesisRp);
